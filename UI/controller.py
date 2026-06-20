@@ -16,7 +16,7 @@ class Controller:
 
     def handleBuildGraph(self, e):
         ymin = self._view._ddYear1.value
-        ymax = self._view._ddYear1.value
+        ymax = self._view._ddYear2.value
 
         if ymin is None or ymax is None:
             self._view.create_alert("Seleziona entrambi i rating")
