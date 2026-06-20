@@ -69,45 +69,55 @@ and r.`date` >= %s and r.`date` <= %s
         return res
 
     @staticmethod
-    def getPesoArco(circuitId1, circuitId2, datai, dataf):
+    def getEdges(datai, dataf):
         cnx = DBConnect.get_connection()
         cursor = cnx.cursor(dictionary=True)
-        query = """
-        SELECT 
-    c1.peso_c1 + c2.peso_c2 AS peso_totale_arco,
-    c1.numero_gare_c1,
-    c2.numero_gare_c2
-FROM 
-    (SELECT 
-        COUNT(DISTINCT r.raceId) AS numero_gare_c1,
-        COUNT(r2.driverId) AS peso_c1
-     FROM races r, results r2
-     WHERE r.raceId = r2.raceId
-       AND r.circuitId = %s
-       AND r.year BETWEEN %s AND %s
-       AND r2.position IS NOT NULL 
-       AND r2.position > 0
-    ) AS c1,
+        query = """select distinct c1.circuitId as idA, c2.circuitid as idB
+from
+(select r1.circuitId, r1.`year`       
+from  races r1, results r2, circuits c 
+where r1.circuitId =c.circuitId 
+and r1.raceId = r2.raceId and
+r2.positionOrder is not null
+and r1.`year` between %s and %s
+) c1,
+(
+select r1.circuitId, r1.`year`       
+from  races r1, results r2, circuits c 
+where r1.circuitId =c.circuitId 
+and r1.raceId = r2.raceId and
+r2.positionOrder is not null
+and r1.`year` between %s and %s
+)  c2
+where
+c1.circuitid <c2.circuitid
 
-    (SELECT 
-        COUNT(DISTINCT r.raceId) AS numero_gare_c2,
-        COUNT(r2.driverId) AS peso_c2
-     FROM races r, results r2
-     WHERE r.raceId = r2.raceId
-       AND r.circuitId = %s
-       AND r.year BETWEEN %s AND %s
-       AND r2.position IS NOT NULL 
-       AND r2.position > 0
-    ) AS c2
 """
-        cursor.execute(query,(circuitId1,datai,dataf,circuitId2,datai,dataf,))
+        cursor.execute(query,(datai,dataf,datai,dataf,))
 
-        """res = []
+        res = []
         for row in cursor:
-            res.append(row)"""
-
-        arco=cursor.fetchone()
+            res.append(row)
 
         cursor.close()
         cnx.close()
-        return arco
+        return res
+
+
+    @staticmethod
+    def getPesiCircuiti(datai, dataf):
+        cnx = DBConnect.get_connection()
+        cursor = cnx.cursor(dictionary=True)
+        query = """
+            select r1.circuitId, count(*) as peso
+            from races r1, results r2
+            where r1.raceId = r2.raceId
+              and r2.position is not null
+              and r1.`year` between %s and %s
+            group by r1.circuitId
+        """
+        cursor.execute(query, (datai, dataf))
+        res = {row["circuitId"]: row["peso"] for row in cursor}
+        cursor.close()
+        cnx.close()
+        return res

@@ -36,7 +36,24 @@ class Controller:
         self._view.update_page()
 
     def handlePrintDetails(self, e):
-        pass
+        dettagli = self._model.getDettagli()
+        self._view._txt_result.controls.clear()
+
+        if dettagli is None:
+            self._view._txt_result.controls.append(
+                ft.Text("Devi prima costruire il grafo.")
+            )
+            self._view.update_page()
+            return
+
+        self._view._txt_result.controls.append(
+            ft.Text(f"Componente connessa più grande: {len(dettagli)} nodi")
+        )
+        for nodo, pesoMax in dettagli:
+            self._view._txt_result.controls.append(
+                ft.Text(f"{nodo.name} ({nodo.country}) - peso max arco incidente: {pesoMax}")
+            )
+        self._view.update_page()
 
     def handleCercaDreamChampionship(self, e):
         pass
